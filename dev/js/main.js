@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     // -------------------------
-    // LENIS (KEEP YOUR PATTERN)
+    // LENIS (KEEP YOUR PATTERN) 5497FF
     // -------------------------
     window.lenis = new Lenis({ smooth: true });
 
@@ -14,50 +14,56 @@ document.addEventListener("DOMContentLoaded", () => {
     gsap.ticker.lagSmoothing(0);
 
     // -------------------------
-    // SPLIT TEXT
+    // SPLIT TEXT (lines + chars)
     // -------------------------
-    const lines = gsap.utils.toArray(".heading-style-h2-upper");
+    const blocks = gsap.utils.toArray(".heading-style-h2-upper");
 
-    const splits = lines.map(line =>
-        new SplitText(line, {
-            type: "chars",
+    const splits = blocks.map(el =>
+        new SplitText(el, {
+            type: "lines,chars",
+            linesClass: "story-line",
             charsClass: "story-char"
         })
     );
 
-    // Initial state → 50% opacity
-    gsap.set(".story-char", {
-        opacity: 0.2,
-        //y: 16
-    });
+    // Initial state
+    gsap.set(".story-char", { opacity: 0.3, color: "#fff" });
 
     // -------------------------
-    // SCROLL ANIMATIONS
+    // SCROLL ANIMATIONS (per line, sequential)
     // -------------------------
     splits.forEach((split, i) => {
-        gsap.to(split.chars, {
-            opacity: 1,
-            //y: 0,
-            ease: "power2.out",
-            stagger: 0.02,
+        const tl = gsap.timeline({
             scrollTrigger: {
-                trigger: lines[i],
+                trigger: blocks[i],
                 start: "top 80%",
                 end: "top 55%",
-                scrub: true
+                scrub: true,
+                invalidateOnRefresh: true
             }
+        });
+
+        split.lines.forEach((lineEl) => {
+            const lineChars = lineEl.querySelectorAll(".story-char");
+
+            tl.to(lineChars, {
+                keyframes: [
+                    { opacity: 0.3, color: "#fff", duration: 0 },
+                    { opacity: 1, color: "#5497FF", duration: 1 },
+                    { opacity: 1, color: "#fff", duration: 1 }
+                ],
+                ease: "none",
+                stagger: 1
+            }, ">"); // ✅ next line starts after previous finishes
         });
     });
 
     // -------------------------
-    // FONT SAFETY (important)
+    // FONT SAFETY
     // -------------------------
     if (document.fonts?.ready) {
-        document.fonts.ready.then(() => {
-            ScrollTrigger.refresh();
-        });
+        document.fonts.ready.then(() => ScrollTrigger.refresh());
     }
-
     // -------------------------
     // FADE TRANSITION ON SCROLL
     // -------------------------
@@ -79,8 +85,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     tl
-    .to(imgA, { opacity: 0, scale: 1, ease: "none" }, 0)
-    .to(imgB, { opacity: 1, scale: 1, ease: "none" }, 0);
+        .to(imgA, { opacity: 0, scale: 1, ease: "none" }, 0)
+        .to(imgB, { opacity: 1, scale: 1, ease: "none" }, 0);
 
     // Refresh after images/fonts load (helps with sticky layouts)
     window.addEventListener("load", () => ScrollTrigger.refresh());

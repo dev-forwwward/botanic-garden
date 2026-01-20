@@ -1,3 +1,5 @@
+console.log("HEEEEY Local");
+
 document.addEventListener("DOMContentLoaded", function () {
     // ---------------------------------------
     // NAV MENU

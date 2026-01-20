@@ -2,3 +2,7 @@
 @import url('form.css');
 @import url('faqs.css');
 @import url('form-multistep-calendly.css');
+
+
+.story-line { display: block; }     /* each row is its own block */
+.story-char { display: inline-block; }
