@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     duration: 0.5,
                     ease: 'power3.out'
                 }, "<")
-                .fromTo('.menu-link-container, .mobile-dropdown-menu .button, .text-size-medium', {
+                .fromTo('.menu-link-container, .mobile-dropdown-menu .button', {
                     opacity: 0,
                     yPercent: 10
                 }, {
