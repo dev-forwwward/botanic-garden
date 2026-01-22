@@ -1,231 +1,199 @@
 console.log("HEEEEY Local");
 
 document.addEventListener("DOMContentLoaded", function () {
-    // ---------------------------------------
-    // NAV MENU
-    const trigger = document.querySelector('#menu-trigger');
-    const menuNavBar = document.querySelector(".mobile-dropdown-menu");
-    const navLinks = document.querySelectorAll('.menu-link');
-    const html = document.documentElement;
-    const body = document.body;
-    const mobileMenu = document.querySelector('.mobile-dropdown-menu');
+// ---------------------------------------
+// NAV MENU (full code + menu-navbar-bg collapses LAST)
+// ---------------------------------------
+const trigger   = document.querySelector('#menu-trigger');
+const menuNavBar = document.querySelector(".mobile-dropdown-menu");
+const navLinks  = document.querySelectorAll('.menu-link');
+const html      = document.documentElement;
+const body      = document.body;
+const mobileMenu = document.querySelector('.mobile-dropdown-menu');
 
-    let scrollY = 0;
-    // Hide initially with class
-    //mobileMenu.classList.add('is-hidden');
+// ✅ background bar that should expand/collapse
+const menuBg = document.querySelector(".menu-navbar-bg");
 
-    trigger.addEventListener("click", function (event) {
-        event.stopPropagation();
+// Config
+function getBgClosedHeight() {
+  const w = window.innerWidth;
 
-        const isOpen = menuNavBar.classList.contains("w--open");
+  // Webflow-style breakpoints
+  if (w <= 767) return "3.6rem";  // 📱 Mobile
+  if (w <= 991) return "5rem"; // 📲 Tablet
+  return "5rem";               // 💻 Desktop (fallback)
+}
 
-        if (isOpen) {
-            // CLOSE MENU
-            body.classList.remove("navbar-menu-open");
-            html.classList.remove("lock-viewport");
+const BG_OPEN = "100%";
+const LINK_SCROLL_OFFSET = 0; // set if you have a sticky header (e.g. 72)
 
-            // Restore scroll
-            body.style.position = '';
-            body.style.top = '';
-            window.scrollTo(0, scrollY);
+let scrollY = 0;
 
-            gsap.to(mobileMenu, {
-                opacity: 0,
-                duration: 0.3,
-                onComplete: () => {
-                    //mobileMenu.classList.add('is-hidden');
-                    menuNavBar.classList.remove("w--open");
-                    gsap.set('.mobile-dropdown-menu', { display: 'none' });
-                }
-            });
+// --------------------
+// Helpers
+// --------------------
+function isMenuOpen() {
+  return menuNavBar.classList.contains("w--open");
+}
 
+function lockScroll() {
+  scrollY = window.scrollY;
 
-        } else {
-            // OPEN MENU
-            scrollY = window.scrollY;
+  body.style.position = 'fixed';
+  body.style.top = `-${scrollY}px`;
+  body.classList.add("navbar-menu-open");
+  html.classList.add("lock-viewport");
+}
 
-            // Lock scroll
-            body.style.position = 'fixed';
-            body.style.top = `-${scrollY}px`;
-            body.classList.add("navbar-menu-open");
-            html.classList.add("lock-viewport");
+function unlockScroll() {
+  body.classList.remove("navbar-menu-open");
+  html.classList.remove("lock-viewport");
 
-            // Remove display none
-            //mobileMenu.classList.remove('is-hidden');
+  body.style.position = '';
+  body.style.top = '';
 
-            gsap.timeline({ defaults: { overwrite: true } })
-                .fromTo('.mobile-dropdown-menu', { opacity: 0 }, {
-                    opacity: 1,
-                    duration: 0.5,
-                    ease: 'power2.out',
-                    onStart: () => {
-                        menuNavBar.classList.add("w--open");
-                        gsap.set('.mobile-dropdown-menu', { display: 'flex' });
-                        html.classList.add("lock-viewport"); // ✅ lock scroll
-                    }
-                })
-                .fromTo('.nav_menu_bg_gradient', { opacity: 0 }, {
-                    opacity: 1,
-                    duration: 0.5,
-                    ease: 'power3.out'
-                }, "<")
-                .fromTo('.menu-link-container, .mobile-dropdown-menu .button', {
-                    opacity: 0,
-                    yPercent: 10
-                }, {
-                    opacity: 1,
-                    yPercent: 0,
-                    stagger: 0.1,
-                    duration: 1,
-                    ease: 'power2.out'
-                }, "<");
-        }
+  window.scrollTo(0, scrollY);
+}
+
+function scrollToSection(targetEl, offset = 0) {
+  if (!targetEl) return;
+  const y = targetEl.getBoundingClientRect().top + window.pageYOffset - offset;
+  window.scrollTo({ top: y, behavior: "smooth" });
+}
+
+// --------------------
+// Open / Close
+// --------------------
+function openMenu() {
+  if (isMenuOpen()) return;
+
+  // Prevent race conditions
+  gsap.killTweensOf(mobileMenu);
+  gsap.killTweensOf(menuBg);
+  gsap.killTweensOf(".nav_menu_bg_gradient");
+  gsap.killTweensOf(".menu-link-container");
+  gsap.killTweensOf(".mobile-dropdown-menu .button");
+
+  // Lock scroll immediately
+  lockScroll();
+
+  // Webflow open-state (keep "as usual")
+  menuNavBar.classList.add("w--open");
+
+  // Put menu in layout now, but invisible until delay passes
+  gsap.set(mobileMenu, { display: "flex", opacity: 0, pointerEvents: "none" });
+
+  // Expand menu bg immediately
+  if (menuBg) {
+    gsap.set(menuBg, { height: getBgClosedHeight() }); // ensure starting point
+    gsap.to(menuBg, { height: BG_OPEN, duration: 0.5, ease: "power2.out" });
+  }
+
+  // Wait 1s, then fade in menu + animate contents
+  gsap.timeline({ defaults: { overwrite: true } })
+    .to({}, { duration: .3 }) // ✅ wait 1s
+    .to(mobileMenu, {
+      opacity: 1,
+      duration: 0.5,
+      ease: "power2.out",
+      onStart: () => gsap.set(mobileMenu, { pointerEvents: "auto" })
+    })
+    .fromTo('.nav_menu_bg_gradient', { opacity: 0 }, {
+      opacity: 1,
+      duration: 0.5,
+      ease: 'power3.out'
+    }, "<")
+    .fromTo('.menu-link-container, .mobile-dropdown-menu .button', {
+      opacity: 0,
+      yPercent: 10
+    }, {
+      opacity: 1,
+      yPercent: 0,
+      stagger: 0.1,
+      duration: 1,
+      ease: 'power2.out'
+    }, "<");
+}
+
+function closeMenu({ onClosed } = {}) {
+  if (!isMenuOpen()) {
+    if (typeof onClosed === "function") onClosed();
+    return;
+  }
+
+  // Prevent race conditions
+  gsap.killTweensOf(mobileMenu);
+  gsap.killTweensOf(menuBg);
+
+  // ✅ CLOSE order:
+  // 1) fade menu 1->0
+  // 2) collapse menu-navbar-bg LAST
+  // 3) then remove w--open + display none + unlock scroll
+  const tl = gsap.timeline({ defaults: { overwrite: true } });
+
+  tl.to(mobileMenu, {
+    opacity: 0,
+    duration: 0.3,
+    ease: "power2.out"
+  });
+
+  if (menuBg) {
+    tl.to(menuBg, {
+      height: getBgClosedHeight(),
+      duration: 0.4,
+      ease: "power2.inOut"
     });
+  }
 
+  tl.add(() => {
+    menuNavBar.classList.remove("w--open");
+    gsap.set(mobileMenu, { display: "none", pointerEvents: "none" });
 
+    // Restore scroll AFTER everything is visually closed
+    unlockScroll();
 
-    // ---------------------------------------
-    // MENU - ACCORDION
-    //https://webflow.com/made-in-webflow/website/pageblock-accordion-with-plus
+    if (typeof onClosed === "function") onClosed();
+  });
+}
 
-    class PBAccordionMenu {
-        constructor() {
-            this.cleanupInitialState();
-            this.init();
-        }
+// --------------------
+// Toggle button
+// --------------------
+trigger?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  if (isMenuOpen()) closeMenu();
+  else openMenu();
+});
 
-        cleanupInitialState() {
-            document.querySelectorAll('[pb-component-menu="accordion"]').forEach(accordion => {
-                const group = accordion.querySelector('[pb-accordion-element-menu="group"]');
-                if (!group) return;
+// Optional: click outside to close
+document.addEventListener("click", (e) => {
+  if (!isMenuOpen()) return;
+  const clickedInsideMenu = mobileMenu?.contains(e.target);
+  const clickedTrigger = trigger?.contains(e.target);
+  if (!clickedInsideMenu && !clickedTrigger) closeMenu();
+});
 
-                const items = group.querySelectorAll('[pb-accordion-element-menu="accordion"]');
-                items.forEach(item => {
-                    const content = item.querySelector('[pb-accordion-element-menu="content"]');
-                    const trigger = item.querySelector('[pb-accordion-element-menu="trigger"]');
-                    const arrow = item.querySelector('[pb-accordion-element-menu="arrow"]');
-                    const plus = item.querySelector('[pb-accordion-element-menu="plus"]');
+// --------------------
+// Close + scroll to section
+// --------------------
+navLinks.forEach((link) => {
+  link.addEventListener("click", (e) => {
+    const href = link.getAttribute("href") || "";
+    const isHashLink = href.startsWith("#");
 
-                    if (content) {
-                        content.style.maxHeight = '0';
-                        content.style.opacity = '0';
-                        content.style.visibility = 'hidden';
-                        content.style.display = 'none';
-                    }
-                    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    // If it's not a hash link, let Webflow do normal navigation
+    if (!isHashLink) return;
 
-                    item.classList.remove('is-active-accordion');
-                    content?.classList.remove('is-active-accordion');
-                    if (arrow) arrow.classList.remove('is-active-accordion');
-                    if (plus) plus.classList.remove('is-active-accordion');
-                });
+    e.preventDefault();
+    e.stopPropagation();
 
-                const initial = group.getAttribute('pb-accordion-initial');
-                if (initial && initial !== 'none') {
-                    const initialItem = items[parseInt(initial) - 1];
-                    if (initialItem) {
-                        this.openAccordion(initialItem);
-                    }
-                }
-            });
-        }
+    const target = document.querySelector(href);
 
-        init() {
-            document.querySelectorAll('[pb-component-menu="accordion"]').forEach(accordion => {
-                const group = accordion.querySelector('[pb-accordion-element-menu="group"]');
-                if (!group) return;
-                group.addEventListener('click', (e) => this.handleClick(e, group));
-            });
-        }
-
-        handleClick(event, group) {
-            const triggerClicked = event.target.closest('[pb-accordion-element-menu="trigger"]');
-            if (!triggerClicked) return; // only toggle if the trigger itself (or a child of it) was clicked
-
-            const accordionItem = triggerClicked.closest('[pb-accordion-element-menu="accordion"]');
-            if (!accordionItem) return;
-
-            const isOpen = accordionItem.classList.contains('is-active-accordion');
-            const isSingle = group.getAttribute('pb-accordion-single-menu') === 'true';
-
-            if (isSingle) {
-                group.querySelectorAll('[pb-accordion-element-menu="accordion"]').forEach(item => {
-                    if (item !== accordionItem && item.classList.contains('is-active-accordion')) {
-                        this.closeAccordion(item);
-                    }
-                });
-            }
-
-            if (isOpen) {
-                this.closeAccordion(accordionItem);
-            } else {
-                this.openAccordion(accordionItem);
-            }
-        }
-
-        openAccordion(item) {
-            const trigger = item.querySelector('[pb-accordion-element-menu="trigger"]');
-            const content = item.querySelector('[pb-accordion-element-menu="content"]');
-            const arrow = item.querySelector('[pb-accordion-element-menu="arrow"]');
-            const plus = item.querySelector('[pb-accordion-element-menu="plus"]');
-
-            content.style.visibility = 'visible';
-            content.style.display = 'block';
-
-            content.offsetHeight;
-
-            const contentHeight = content.scrollHeight;
-
-            requestAnimationFrame(() => {
-                content.style.maxHeight = `${contentHeight}px`;
-                content.style.opacity = '1';
-                trigger.setAttribute('aria-expanded', 'true');
-                item.classList.add('is-active-accordion');
-                content.classList.add('is-active-accordion');
-                if (arrow) arrow.classList.add('is-active-accordion');
-                if (plus) plus.classList.add('is-active-accordion');
-            });
-
-            content.addEventListener('transitionend', () => {
-                if (item.classList.contains('is-active-accordion')) {
-                    content.style.maxHeight = 'none';
-                }
-            }, { once: true });
-        }
-
-        closeAccordion(item) {
-            const trigger = item.querySelector('[pb-accordion-element-menu="trigger"]');
-            const content = item.querySelector('[pb-accordion-element-menu="content"]');
-            const arrow = item.querySelector('[pb-accordion-element-menu="arrow"]');
-            const plus = item.querySelector('[pb-accordion-element-menu="plus"]');
-
-            content.style.maxHeight = `${content.scrollHeight}px`;
-            content.style.display = 'block';
-
-            content.offsetHeight;
-
-            requestAnimationFrame(() => {
-                content.style.maxHeight = '0';
-                content.style.opacity = '0';
-                trigger.setAttribute('aria-expanded', 'false');
-                item.classList.remove('is-active-accordion');
-                content.classList.remove('is-active-accordion');
-                if (arrow) arrow.classList.remove('is-active-accordion');
-                if (plus) plus.classList.remove('is-active-accordion');
-            });
-
-            content.addEventListener('transitionend', () => {
-                if (!item.classList.contains('is-active-accordion')) {
-                    content.style.visibility = 'hidden';
-                    content.style.display = 'none';
-                }
-            }, { once: true });
-        }
-    }
-
-    // Initialize
-    new PBAccordionMenu();
-
+    closeMenu({
+      onClosed: () => scrollToSection(target, LINK_SCROLL_OFFSET)
+    });
+  });
+});
 
 
 
@@ -267,68 +235,6 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("scroll", handleScroll);
 
 
-
-
-
-    // when the user hovers a link on the right side, 
-    // the image on the left of the submenu should change
-    //
-    const links  = document.querySelectorAll(".item_list_dropdown");
-    const box    = document.getElementById("submenu-image");
-    const layers = box ? box.querySelectorAll(".col_img") : [];
-
-    if (!links.length || layers.length < 2) return;
-
-    let active = 0; // index of the currently visible layer
-    const cache = new Map(); // remembers which URLs are loaded
-    cache.set("current", null);
-
-    function crossfade(url) {
-        if (!url || cache.get("current") === url) return;
-
-        const next = active ^ 1;           // toggle 0/1
-        const nextImg = layers[next];
-        const curImg  = layers[active];
-
-        const reveal = () => {
-        nextImg.classList.add("show");   // fade in next
-        curImg.classList.remove("show"); // fade out current
-        active = next;
-        cache.set("current", url);
-        };
-
-        // set src and wait for load to avoid any gap
-        nextImg.src = url;
-
-        // Prefer decode() for instant-ready swap when possible
-        if ("decode" in nextImg) {
-        nextImg.decode().then(() => {
-            cache.set(url, true);
-            reveal();
-        }).catch(() => {
-            // fallback if decode fails (SVG, etc.)
-            nextImg.addEventListener("load", () => { cache.set(url, true); reveal(); }, { once: true });
-        });
-        } else {
-        nextImg.addEventListener("load", () => { cache.set(url, true); reveal(); }, { once: true });
-        }
-    }
-
-    // Hover bindings
-    links.forEach(link => {
-        link.addEventListener("mouseenter", () => {
-        crossfade(link.getAttribute("data-img"));
-        });
-    });
-
-    // Initial image (from first link)
-    const first = links[0]?.getAttribute("data-img");
-    if (first) {
-        layers[active].src = first;
-        layers[active].classList.add("show");
-        cache.set(first, true);
-        cache.set("current", first);
-    }
 
 
 });
