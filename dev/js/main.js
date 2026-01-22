@@ -68,8 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // FADE TRANSITION ON SCROLL
     // -------------------------
     const wrap = document.querySelector(".section_header5_fwd");
-    const imgA = document.querySelector(".header5_background-image-2");
-    const imgB = document.querySelector(".header5_background-image");
+    const imgA = document.querySelectorAll(".header5_background-image-2");
+    const imgB = document.querySelectorAll(".header5_background-image");
 
     // Optional polish: tiny zoom to hide banding + feels premium
     gsap.set(imgB, { opacity: 0, scale: 1 });
