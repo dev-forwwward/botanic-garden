@@ -7,7 +7,7 @@
     transition: all 0.3s ease-in-out;
 }
 
-.scrolled {
+/* .scrolled {
 
     .padding-global.nav-top,
     .nav-left-line,
@@ -20,7 +20,7 @@
         color: var(--_primitives---colors--neutral-darkest);
     }
 
-}
+} */
 
 
 .menu-icon2_line-top,
@@ -39,6 +39,8 @@
 }
 
 .navbar-menu-open {
+    left: 0;
+    right: 0;
 
     .menu-navbar-bg {
         border-radius: 1rem;

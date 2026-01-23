@@ -1,5 +1,3 @@
-console.log("HEEEEY Local");
-
 document.addEventListener("DOMContentLoaded", function () {
 // ---------------------------------------
 // NAV MENU (full code + menu-navbar-bg collapses LAST)
@@ -198,6 +196,7 @@ navLinks.forEach((link) => {
 
 
 
+
     /* Menu HIDE/REVEAL w/ Scroll */
     let lastScrollTop = 0;
     const navComponent = document.querySelector(".navbar_component");
@@ -233,7 +232,6 @@ navLinks.forEach((link) => {
     handleScroll();
 
     window.addEventListener("scroll", handleScroll);
-
 
 
 

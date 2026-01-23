@@ -97,16 +97,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
-
-
-
-
-// gsap.to('.preloader', {
-//     opacity: 0,
-//     delay: .1,
-//     duration: .5,
-//     ease: "power2.out",
-//     onComplete: ()=> {
-//         document.querySelector('.preloader').remove();
-//     }
-// });

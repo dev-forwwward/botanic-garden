@@ -1,12 +1,18 @@
 /* Validation errors */
 form label.error {
+    display: flex;
+    align-items: center;
     font-size: 0.875rem;
     position: absolute;
-    top: calc(100% + .25rem);
+    top: calc(100% + .2rem);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease 0.3s, visibility 0s linear 0.3s;
-    color: var(--text-color--text-error);
+    color: var(--color-scheme-1--error);
+
+    svg {
+        margin-right: .5rem;
+    }
 }
 
 form label.error.show {
