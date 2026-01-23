@@ -14,49 +14,78 @@ document.addEventListener("DOMContentLoaded", () => {
     gsap.ticker.lagSmoothing(0);
 
     // -------------------------
-    // SPLIT TEXT (lines + chars)
+    // TEXT REVEAL - SECTION 2
     // -------------------------
-    const blocks = gsap.utils.toArray(".heading-style-h2-upper");
-
-    const splits = blocks.map(el =>
-        new SplitText(el, {
-            type: "lines,chars",
-            linesClass: "story-line",
-            charsClass: "story-char"
-        })
-    );
-
-    // Initial state
-    gsap.set(".story-char", { opacity: 0.3, color: "#fff" });
-
-    // -------------------------
-    // SCROLL ANIMATIONS (per line, sequential)
-    // -------------------------
-    splits.forEach((split, i) => {
-        const tl = gsap.timeline({
-            scrollTrigger: {
-                trigger: blocks[i],
-                start: "top 80%",
-                end: "top 55%",
-                scrub: true,
-                invalidateOnRefresh: true
-            }
+    function initStory() {
+        // Kill previous instances (important in Webflow + refresh)
+        ScrollTrigger.getAll().forEach(st => {
+            if (st.vars && st.vars.id === "storyST") st.kill();
         });
 
-        split.lines.forEach((lineEl) => {
-            const lineChars = lineEl.querySelectorAll(".story-char");
+        // Revert previous splits if any
+        if (window.__storySplits) {
+            window.__storySplits.forEach(s => s.revert());
+        }
 
-            tl.to(lineChars, {
-                keyframes: [
-                    { opacity: 0.3, color: "#fff", duration: 0 },
-                    { opacity: 1, color: "#5497FF", duration: 1 },
-                    { opacity: 1, color: "#fff", duration: 1 }
-                ],
-                ease: "none",
-                stagger: 1
-            }, ">"); // ✅ next line starts after previous finishes
+        const blocks = gsap.utils.toArray(".heading-style-h2-upper");
+        if (!blocks.length) return;
+
+        // Create fresh splits
+        const splits = blocks.map(el =>
+            new SplitText(el, {
+                type: "lines,chars",
+                linesClass: "story-line",
+                charsClass: "story-char"
+            })
+        );
+        window.__storySplits = splits;
+
+        // Initial state
+        gsap.set(".story-char", { opacity: 0.3, color: "#fff" });
+
+        // Build ONE master timeline in strict order
+        const tl = gsap.timeline({ defaults: { ease: "none" } });
+
+        splits.forEach(split => {
+            split.lines.forEach(lineEl => {
+                const lineChars = lineEl.querySelectorAll(".story-char");
+
+                tl.to(lineChars, {
+                    keyframes: [
+                        { opacity: 0.3, color: "#fff", duration: 0 },
+                        { opacity: 1, color: "#5497FF", duration: 1 },
+                        { opacity: 1, color: "#fff", duration: 1 }
+                    ],
+                    stagger: 1
+                }, ">");
+            });
         });
+
+        // Create ONE ScrollTrigger for the whole sequence
+        ScrollTrigger.create({
+            id: "storyST",
+            trigger: blocks[0].closest("section, .story, .container") || blocks[0],
+            start: "top 85%",
+            end: () => "+=" + Math.ceil(tl.duration() * 5), // dynamic scroll length
+            scrub: true,
+            animation: tl,
+            invalidateOnRefresh: true,
+            markers: true
+        });
+    }
+
+    // init
+    initStory();
+
+    // rebuild on resize (SplitText lines depend on wrapping)
+    window.addEventListener("resize", () => {
+        clearTimeout(window.__storyResizeTO);
+        window.__storyResizeTO = setTimeout(() => {
+            initStory();
+            ScrollTrigger.refresh();
+        }, 200);
     });
+
 
     // -------------------------
     // FONT SAFETY
@@ -90,10 +119,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Refresh after images/fonts load (helps with sticky layouts)
     window.addEventListener("load", () => ScrollTrigger.refresh());
-
-
-
-
 
 });
 
