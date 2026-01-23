@@ -70,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
             scrub: true,
             animation: tl,
             invalidateOnRefresh: true,
-            markers: true
+            //markers: true
         });
     }
 
